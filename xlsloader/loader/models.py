@@ -11,6 +11,12 @@ class CommonFields(models.Model):
     class Meta:
         abstract = True
         ordering = ('articul')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['articul', 'title'], 
+                name='unique_articul_title'
+            )
+        ]
 
     def __str__(self):
         return self.title
