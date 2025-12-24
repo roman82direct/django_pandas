@@ -1,0 +1,14 @@
+{% load static %}
+<header>
+  <nav class="navbar navbar-light" style="background-color: lightskyblue">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'loader:index' %}">
+        XLS-Loader
+      </a>
+      <div class="btn-group" role="group" aria-label="Basic outlined example">
+        <button type="button" class="btn btn-outline-primary"><a class="text-decoration-none text-reset"
+          href="{% url 'loader:import_excel' %}">load data</a></button>
+      </div>
+    </div>
+  </nav>
+</header>

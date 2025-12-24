@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}
+  Группы
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Каталог категорий</h2>
+    
+  {% for group in groups %}
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-folder-open me-2"></i>
+          {{ group.articul }} - {{ group.title }}
+        </h5>
+        <small class="text-white-50">{{ group.description|truncatechars:50 }}</small>
+      </div>
+        
+      <div class="card-body">
+        {% if group.main_cats %}
+          <div class="row">
+            {% for maincat in group.main_cats %}
+              <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100 border-start border-primary border-4">
+                  <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                      {{ maincat.articul }} - {{ maincat.title }}
+                    </h6>
+                  </div>
+                  <div class="card-body">
+                    <p class="small text-muted mb-3">{{ maincat.description|truncatechars:40 }}</p>
+                      
+                    {% if maincat.secondcategories.all %}
+                      <div class="row g-2">
+                        {% for second in maincat.secondcategories.all %}
+                          <div class="col-12 col-sm-6 col-md-12">
+                            <div class="card border-0 bg-light-subtle p-2">
+                              <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                  <strong class="text-primary">{{ second.articul }}</strong><br>
+                                  <span class="fw-medium">{{ second.title }}</span>
+                                </div>
+                                <small class="text-muted">{{ second.created_at|date:"d.m.Y" }}</small>
+                              </div>
+                              {% if second.description %}
+                                <small class="text-muted d-block mt-1">{{ second.description|truncatechars:30 }}</small>
+                              {% endif %}
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                        <div class="alert alert-info py-2 mb-0 small">
+                            Нет категорий 2-го уровня
+                        </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            В группе нет основных категорий
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="alert alert-info text-center">
+      <i class="fas fa-folder-open fa-3x mb-3 opacity-50"></i>
+      <h4>Группы не найдены</h4>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
