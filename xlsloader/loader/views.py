@@ -5,7 +5,7 @@ from django.db.models import Prefetch
 from django.urls import reverse_lazy
 from django.views.generic import FormView, ListView
 
-from .models import Group, MainCategory
+from .models import Group, MainCategory, SecondCategory
 from .forms import ExcelImportForm
 
 
@@ -32,24 +32,67 @@ class ExcelImportView(FormView):
     template_name = 'loader/load_form.html'
     success_url = reverse_lazy('loader:import_excel')
 
+    @staticmethod
+    def _update_or_create(model, row, prefix: str, extra_defaults=None):
+        if extra_defaults is None:
+            extra_defaults = {}
+
+        data = {
+            'articul': row.get(f'{prefix}articul'),
+            'title': row.get(f'{prefix}title'),
+            'description': row.get(f'{prefix}description', '') or '',
+            **extra_defaults,
+        }
+        obj, created = model.objects.update_or_create(
+            articul=data['articul'],
+            defaults=data,
+        )
+        return obj, created
+    
     def form_valid(self, form):
-        Group.objects.all().delete()
+        # Group.objects.all().delete()
+        # MainCategory.objects.all().delete()
+        # SecondCategory.objects.all().delete()
         excel_file = form.cleaned_data['excel_file']
         df = pd.read_excel(excel_file)
-        imported_count = 0
+        created_groups = created_maincats = created_secondcats = 0
         for _, row in df.iterrows():
-            group_data = {
-                'articul': row.get('group_articul'),
-                'title': row.get('group_title'),
-                'description': row.get('group_description', ''),
-            }
-            group, created = Group.objects.update_or_create(
-                articul=group_data['articul'],
-                defaults=group_data
+            group, created = self._update_or_create(
+                model=Group,
+                prefix='group_',
+                row=row
             )
             if created:
-                imported_count += 1
+                created_groups += 1
+
+            # загрузка maincategory
+            if (not row.get('maincategory_articul')) or \
+                    (not row.get('maincategory_title')):
+                continue
+            maincategory, created = self._update_or_create(
+                model=MainCategory,
+                row=row,
+                prefix='maincategory_',
+                extra_defaults={'group': group}
+            )
+            if created:
+                created_maincats += 1
+
+            # загрузка secondcategory
+            if (not row.get('secondcategory_articul')) or \
+                    (not row.get('secondcategory_title')):
+                continue
+            secondcategory, created = self._update_or_create(
+                model=SecondCategory,
+                row=row,
+                prefix='secondcategory_',
+                extra_defaults={'maincategory': maincategory}
+            )
+            if created:
+                created_secondcats += 1
         messages.success(
-            self.request, f'Загружено новых групп: {imported_count}. '
+            self.request, f'Загружено новых групп: {created_groups}, '
+                          f'основных категорий: {created_maincats}, '
+                          f'категорий 2-го уровня: {created_secondcats}, '
         )
         return super().form_valid(form)
